@@ -1,0 +1,56 @@
+
+# 导入openai模块和os模块
+import openai
+import os
+
+# 设置API密钥
+openai.api_key = ("填写你的api")
+
+# 读取文档的函数
+def read_txt_file(file_path):
+    with open(file_path, "r", encoding="utf-8") as file:
+        content = file.read()
+    return content
+
+# 将文本划分成300字的函数
+def split_text_into_parts(text, part_length=300):
+    return [text[i:i+part_length] for i in range(0, len(text), part_length)]
+
+# 向GPT-3.5-turbo发送请求的函数
+def get_summary(prompt):
+    response = openai.Completion.create(
+        engine="text-davinci-003",  # 使用gpt-3.5-turbo
+        prompt=prompt,
+        max_tokens=200,  # 限制回复长度
+        n=1,
+        stop=None,
+        temperature=0.7,
+    )
+    return response.choices[0].text.strip()
+
+# 将摘要写入新的txt文件的函数
+def write_txt_file(file_path, content):
+    with open(file_path, "w", encoding="utf-8") as file:
+        file.write(content)
+
+# 主要功能实现
+def summarize_document(input_file_path, output_file_path):
+    text = read_txt_file(input_file_path)
+    parts = split_text_into_parts(text)
+    summary_parts = []
+
+    for part in parts:
+        prompt = f"以下是一篇录音转文字得到的文稿，请帮我做到1、删除录音转文字文稿中的重复内容；2、修正因语音识别错误导致的文本错误；3、在不减少有效信息的前提下做适当的概括，最终给我整理后的文稿：\n{part}\n"
+        summary = get_summary(prompt)
+        summary_parts.append(summary)
+
+    summarized_text = " ".join(summary_parts)
+    write_txt_file(output_file_path, summarized_text)
+    print("文档总结完成！")
+
+
+if __name__ == "__main__":
+    input_file_path = r"C:\Users\china\Desktop\test.txt"  # 输入文件路径
+    output_file_path = r"C:\Users\china\Desktop\summarized.txt"  # 输出文件路径
+    summarize_document(input_file_path, output_file_path)
+
